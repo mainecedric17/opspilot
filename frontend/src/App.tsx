@@ -24,6 +24,7 @@ import {
 
 import ActivityLogs from './ActivityLogs'
 import TaskTable from './components/TaskTable'
+import TaskFormModal from './components/TaskFormModal'
 import OverviewDashboard from './components/OverviewDashboard'
 import DeleteTaskModal from './components/DeleteTaskModal'
 import TaskDetailsModal from './components/TaskDetailsModal'
@@ -41,7 +42,6 @@ import type {
   Task,
   TaskForm,
   TaskStatus,
-  Priority
 } from './types/task'
 import { emptyForm } from './types/task'
 import { taskService } from './services/taskService'
@@ -664,201 +664,21 @@ function App() {
         />
       )}
       {modalOpen && (
-        <div
-          className="op-modal-backdrop"
-          onMouseDown={e => {
-            if (
-              e.target === e.currentTarget &&
-              !saving
-            ) {
-              setModalOpen(false)
-              setError('')
-            }
+        <TaskFormModal
+          editingTask={editingTask}
+          form={form}
+          saving={saving}
+          error={error}
+          onChange={setForm}
+          onClose={() => {
+            if (saving) return
+            setModalOpen(false)
+            setError('')
           }}
-        >
-          <div
-            className="op-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="task-modal-title"
-          >
-            <div className="op-modal-header">
-              <div>
-                <span className="op-modal-eyebrow">
-                  TASK MANAGEMENT
-                </span>
-
-                <h2 id="task-modal-title">
-                  {editingTask
-                    ? 'Edit task'
-                    : 'Create new task'}
-                </h2>
-
-                <p>
-                  {editingTask
-                    ? 'Update the details of this task.'
-                    : 'Add a task to your workspace.'}
-                </p>
-              </div>
-
-              <button
-                className="op-icon-button"
-                disabled={saving}
-                onClick={() =>
-                  setModalOpen(false)
-                }
-                aria-label="Close modal"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <form
-              className="op-task-form"
-              onSubmit={e => {
-                e.preventDefault()
-                void saveTask()
-              }}
-            >
-              <label>
-                Task title
-
-                <input
-                  required
-                  maxLength={200}
-                  placeholder="e.g. Review customer onboarding"
-                  value={form.title}
-                  onChange={e =>
-                    setForm({
-                      ...form,
-                      title: e.target.value
-                    })
-                  }
-                />
-              </label>
-
-              <label>
-                Description
-
-                <textarea
-                  rows={3}
-                  placeholder="Add task details (optional)"
-                  value={form.description}
-                  onChange={e =>
-                    setForm({
-                      ...form,
-                      description: e.target.value
-                    })
-                  }
-                />
-              </label>
-
-              <div className="op-form-grid">
-                <label>
-                  Owner
-
-                  <input
-                    required
-                    placeholder="Operations"
-                    value={form.owner}
-                    onChange={e =>
-                      setForm({
-                        ...form,
-                        owner: e.target.value
-                      })
-                    }
-                  />
-                </label>
-
-                <label>
-                  Priority
-
-                  <select
-                    value={form.priority}
-                    onChange={e =>
-                      setForm({
-                        ...form,
-                        priority:
-                          e.target.value as Priority
-                      })
-                    }
-                  >
-                    <option value="Low">
-                      Low
-                    </option>
-                    <option value="Medium">
-                      Medium
-                    </option>
-                    <option value="High">
-                      High
-                    </option>
-                  </select>
-                </label>
-              </div>
-
-              {editingTask && (
-                <label>
-                  Status
-
-                  <select
-                    value={form.status}
-                    onChange={e =>
-                      setForm({
-                        ...form,
-                        status:
-                          e.target.value as TaskStatus
-                      })
-                    }
-                  >
-                    <option value="Pending">
-                      Pending
-                    </option>
-                    <option value="In Progress">
-                      In Progress
-                    </option>
-                    <option value="Completed">
-                      Completed
-                    </option>
-                  </select>
-                </label>
-              )}
-
-              <div className="op-modal-actions">
-                <button
-                  type="button"
-                  className="op-cancel-button"
-                  disabled={saving}
-                  onClick={() =>
-                    setModalOpen(false)
-                  }
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  className="primary-button"
-                  disabled={saving}
-                >
-                  {saving && (
-                    <Loader2
-                      className="op-spin"
-                      size={17}
-                    />
-                  )}
-
-                  {saving
-                    ? 'Saving...'
-                    : editingTask
-                      ? 'Save changes'
-                      : 'Create task'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+          onSubmit={saveTask}
+          onClearError={() => setError('')}
+        />
       )}
-
       {deleteTarget && (
         <DeleteTaskModal
           task={deleteTarget}
