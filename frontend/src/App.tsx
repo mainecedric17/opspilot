@@ -5,7 +5,6 @@ import {
   AlertCircle,
   ArrowUpRight,
   Bot,
-  CalendarDays,
   CheckCircle2,
   ChevronDown,
   CircleHelp,
@@ -14,14 +13,12 @@ import {
   ListTodo,
   Loader2,
   Menu,
-  Pencil,
   Plus,
   Search,
   Settings,
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
-  Trash2,
   Workflow,
   X,
   Zap
@@ -29,6 +26,8 @@ import {
 
 import ActivityLogs from './ActivityLogs'
 import TaskTable from './components/TaskTable'
+import DeleteTaskModal from './components/DeleteTaskModal'
+import TaskDetailsModal from './components/TaskDetailsModal'
 import './App.css'
 
 type Page =
@@ -55,20 +54,6 @@ const navigation = [
   { name: 'Workflows', icon: Workflow },
   { name: 'Activity Logs', icon: Activity }
 ] as const
-
-function formatDate(value: string) {
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return 'Unknown'
-  }
-
-  return date.toLocaleString('en-PH', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'Asia/Manila'
-  })
-}
 
 function App() {
   const [page, setPage] = useState<Page>('Overview')
@@ -820,148 +805,12 @@ function App() {
       </main>
 
       {selectedTask && (
-        <div
-          className="op-modal-backdrop"
-          onMouseDown={e => {
-            if (e.target === e.currentTarget) {
-              setDetailsId(null)
-            }
-          }}
-        >
-          <div
-            className="op-modal op-details-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="details-title"
-          >
-            <div className="op-modal-header">
-              <div>
-                <span className="op-modal-eyebrow">
-                  TASK DETAILS
-                </span>
-
-                <h2 id="details-title">
-                  {selectedTask.title}
-                </h2>
-
-                <p>
-                  View task information and manage progress.
-                </p>
-              </div>
-
-              <button
-                className="op-icon-button"
-                onClick={() =>
-                  setDetailsId(null)
-                }
-                aria-label="Close task details"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="op-details-section">
-              <span className="op-details-label">
-                Description
-              </span>
-
-              <p className="op-details-description">
-                {selectedTask.description?.trim() ||
-                  'No description provided for this task.'}
-              </p>
-            </div>
-
-            <div className="op-details-grid">
-              <div className="op-details-field">
-                <span className="op-details-label">
-                  Priority
-                </span>
-
-                <span
-                  className={`priority priority-${selectedTask.priority.toLowerCase()}`}
-                >
-                  {selectedTask.priority}
-                </span>
-              </div>
-
-              <div className="op-details-field">
-                <span className="op-details-label">
-                  Status
-                </span>
-
-                <span
-                  className={`task-status status-${selectedTask.status.toLowerCase().replace(' ', '-')}`}
-                >
-                  <span className="mini-dot" />
-                  {selectedTask.status}
-                </span>
-              </div>
-
-              <div className="op-details-field">
-                <span className="op-details-label">
-                  Owner
-                </span>
-
-                <strong>
-                  {selectedTask.owner}
-                </strong>
-              </div>
-
-              <div className="op-details-field">
-                <span className="op-details-label">
-                  Task ID
-                </span>
-
-                <code className="op-task-id">
-                  {selectedTask.id.slice(0, 8)}...
-                </code>
-              </div>
-            </div>
-
-            <div className="op-details-dates">
-              <div>
-                <CalendarDays size={16} />
-
-                <span>
-                  Created:{' '}
-                  {formatDate(selectedTask.created_at)}
-                </span>
-              </div>
-
-              <div>
-                <Clock3 size={16} />
-
-                <span>
-                  Updated:{' '}
-                  {formatDate(selectedTask.updated_at)}
-                </span>
-              </div>
-            </div>
-
-            <div className="op-modal-actions">
-              <button
-                className="op-cancel-button"
-                onClick={() =>
-                  setDetailsId(null)
-                }
-              >
-                Close
-              </button>
-
-              <button
-                className="primary-button"
-                onClick={() =>
-                  openEdit(selectedTask)
-                }
-              >
-                <Pencil size={16} />
-                Edit task
-              </button>
-            </div>
-          </div>
-        </div>
+        <TaskDetailsModal
+          task={selectedTask}
+          onClose={() => setDetailsId(null)}
+          onEdit={openEdit}
+        />
       )}
-
       {modalOpen && (
         <div
           className="op-modal-backdrop"
@@ -1159,59 +1008,25 @@ function App() {
       )}
 
       {deleteTarget && (
-        <div className="op-modal-backdrop">
-          <div
-            className="op-modal op-delete-modal"
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="delete-modal-title"
-          >
-            <div className="op-delete-icon">
-              <Trash2 size={24} />
-            </div>
-
-            <h2 id="delete-modal-title">
-              Delete this task?
-            </h2>
-
-            <p>
-              You're about to permanently delete
-              <strong>
-                {' '}{deleteTarget.title}
-              </strong>.
-              This action cannot be undone.
-            </p>
-
-            <div className="op-modal-actions">
-              <button
-                className="op-cancel-button"
-                disabled={saving}
-                onClick={() =>
-                  setDeleteTarget(null)
-                }
-              >
-                Cancel
-              </button>
-
-              <button
-                className="op-danger-button"
-                disabled={saving}
-                onClick={() =>
-                  void deleteTask()
-                }
-              >
-                {saving
-                  ? 'Deleting...'
-                  : 'Delete task'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <DeleteTaskModal
+          task={deleteTarget}
+          saving={saving}
+          onClose={() => {
+            if (!saving) {
+              setDeleteTarget(null)
+            }
+          }}
+          onConfirm={() => {
+            void deleteTask()
+          }}
+        />
       )}
     </div>
   )
 }
 
 export default App
+
+
 
 
