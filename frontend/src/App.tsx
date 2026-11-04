@@ -39,42 +39,14 @@ type Page =
   | 'Workflows'
   | 'Activity Logs'
 
-type Priority = 'Low' | 'Medium' | 'High'
-
-type TaskStatus =
-  | 'Pending'
-  | 'In Progress'
-  | 'Completed'
-
-type Task = {
-  id: string
-  title: string
-  description: string | null
-  owner: string
-  priority: Priority
-  status: TaskStatus
-  created_at: string
-  updated_at: string
-}
-
-type TaskForm = {
-  title: string
-  description: string
-  owner: string
-  priority: Priority
-  status: TaskStatus
-}
-
-const API_URL = 'http://127.0.0.1:8000'
-
-const emptyForm: TaskForm = {
-  title: '',
-  description: '',
-  owner: 'Operations',
-  priority: 'Medium',
-  status: 'Pending'
-}
-
+import type {
+  Task,
+  TaskForm,
+  TaskStatus,
+  Priority
+} from './types/task'
+import { emptyForm } from './types/task'
+import { taskService } from './services/taskService'
 const navigation = [
   { name: 'Overview', icon: LayoutDashboard },
   { name: 'Tasks', icon: ListTodo },
@@ -83,29 +55,6 @@ const navigation = [
   { name: 'Workflows', icon: Workflow },
   { name: 'Activity Logs', icon: Activity }
 ] as const
-
-async function apiRequest<T>(
-  path: string,
-  options?: RequestInit
-): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers
-    }
-  })
-
-  if (!response.ok) {
-    throw new Error(`Request failed: ${response.status}`)
-  }
-
-  if (response.status === 204) {
-    return undefined as T
-  }
-
-  return response.json() as Promise<T>
-}
 
 function formatDate(value: string) {
   const date = new Date(value)
@@ -148,7 +97,7 @@ function App() {
 
     async function loadTasks() {
       try {
-        const data = await apiRequest<Task[]>('/api/tasks')
+        const data = await taskService.getAll()
 
         if (!cancelled) {
           setTasks(data)
@@ -264,19 +213,13 @@ function App() {
 
     try {
       if (editingTask) {
-        const updated = await apiRequest<Task>(
-          `/api/tasks/${editingTask.id}`,
-          {
-            method: 'PATCH',
-            body: JSON.stringify({
+        const updated = await taskService.update(editingTask.id, {
               title: form.title.trim(),
               description: form.description.trim() || null,
               owner: form.owner.trim(),
               priority: form.priority,
               status: form.status
             })
-          }
-        )
 
         setTasks(current =>
           current.map(task =>
@@ -286,18 +229,12 @@ function App() {
 
         setNotice('Task updated successfully.')
       } else {
-        const created = await apiRequest<Task>(
-          '/api/tasks',
-          {
-            method: 'POST',
-            body: JSON.stringify({
+        const created = await taskService.create({
               title: form.title.trim(),
               description: form.description.trim() || null,
               owner: form.owner.trim(),
               priority: form.priority
             })
-          }
-        )
 
         setTasks(current => [created, ...current])
         clearFilters()
@@ -326,13 +263,7 @@ function App() {
     setError('')
 
     try {
-      const updated = await apiRequest<Task>(
-        `/api/tasks/${task.id}`,
-        {
-          method: 'PATCH',
-          body: JSON.stringify({ status })
-        }
-      )
+      const updated = await taskService.update(task.id, { status })
 
       setTasks(current =>
         current.map(item =>
@@ -355,10 +286,7 @@ function App() {
     setError('')
 
     try {
-      await apiRequest<void>(
-        `/api/tasks/${deleteTarget.id}`,
-        { method: 'DELETE' }
-      )
+      await taskService.delete(deleteTarget.id)
 
       setTasks(current =>
         current.filter(task =>
@@ -1285,4 +1213,5 @@ function App() {
 }
 
 export default App
+
 
