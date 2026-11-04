@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   Activity,
   AlertCircle,
@@ -41,10 +41,9 @@ type Page =
 import type {
   Task,
   TaskForm,
-  TaskStatus,
 } from './types/task'
 import { emptyForm } from './types/task'
-import { taskService } from './services/taskService'
+import { useTasks } from './hooks/useTasks'
 const navigation = [
   { name: 'Overview', icon: LayoutDashboard },
   { name: 'Tasks', icon: ListTodo },
@@ -56,7 +55,6 @@ const navigation = [
 
 function App() {
   const [page, setPage] = useState<Page>('Overview')
-  const [tasks, setTasks] = useState<Task[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const [search, setSearch] = useState('')
@@ -64,10 +62,19 @@ function App() {
   const [priorityFilter, setPriorityFilter] = useState('All')
   const [ownerFilter, setOwnerFilter] = useState('All')
 
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-  const [notice, setNotice] = useState('')
+  const {
+    tasks,
+    loading,
+    saving,
+    error,
+    notice,
+    setError,
+    setNotice,
+    createTask,
+    updateTask,
+    changeStatus,
+    deleteTask: removeTask
+  } = useTasks()
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
@@ -75,37 +82,6 @@ function App() {
 
   const [deleteTarget, setDeleteTarget] = useState<Task | null>(null)
   const [detailsId, setDetailsId] = useState<string | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function loadTasks() {
-      try {
-        const data = await taskService.getAll()
-
-        if (!cancelled) {
-          setTasks(data)
-          setError('')
-        }
-      } catch {
-        if (!cancelled) {
-          setError(
-            'Cannot connect to FastAPI. Check that the backend is running.'
-          )
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
-      }
-    }
-
-    void loadTasks()
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   const owners = Array.from(
     new Set(tasks.map(task => task.owner))
@@ -179,105 +155,32 @@ function App() {
   async function saveTask() {
     if (saving) return
 
-    if (!form.title.trim() || !form.owner.trim()) {
-      setError('Task title and owner are required.')
-      return
+    const wasEditing = editingTask !== null
+
+    const success = editingTask
+      ? await updateTask(editingTask.id, form)
+      : await createTask(form)
+
+    if (!success) return
+
+    if (!wasEditing) {
+      clearFilters()
     }
 
-    setSaving(true)
-    setError('')
-
-    try {
-      if (editingTask) {
-        const updated = await taskService.update(editingTask.id, {
-              title: form.title.trim(),
-              description: form.description.trim() || null,
-              owner: form.owner.trim(),
-              priority: form.priority,
-              status: form.status
-            })
-
-        setTasks(current =>
-          current.map(task =>
-            task.id === updated.id ? updated : task
-          )
-        )
-
-        setNotice('Task updated successfully.')
-      } else {
-        const created = await taskService.create({
-              title: form.title.trim(),
-              description: form.description.trim() || null,
-              owner: form.owner.trim(),
-              priority: form.priority
-            })
-
-        setTasks(current => [created, ...current])
-        clearFilters()
-        setNotice('Task created successfully.')
-      }
-
-      setModalOpen(false)
-      setEditingTask(null)
-      setPage('Tasks')
-    } catch {
-      setError(
-        'Could not save task. Please check the backend.'
-      )
-    } finally {
-      setSaving(false)
-    }
+    setModalOpen(false)
+    setEditingTask(null)
+    setPage('Tasks')
   }
 
-  async function changeStatus(
-    task: Task,
-    status: TaskStatus
-  ) {
-    if (saving || task.status === status) return
-
-    setSaving(true)
-    setError('')
-
-    try {
-      const updated = await taskService.update(task.id, { status })
-
-      setTasks(current =>
-        current.map(item =>
-          item.id === updated.id ? updated : item
-        )
-      )
-
-      setNotice('Task status updated.')
-    } catch {
-      setError('Could not update task status.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  async function deleteTask() {
+  async function confirmDeleteTask() {
     if (!deleteTarget || saving) return
 
-    setSaving(true)
-    setError('')
+    const success = await removeTask(deleteTarget.id)
 
-    try {
-      await taskService.delete(deleteTarget.id)
+    if (!success) return
 
-      setTasks(current =>
-        current.filter(task =>
-          task.id !== deleteTarget.id
-        )
-      )
-
-      setDetailsId(null)
-      setDeleteTarget(null)
-      setNotice('Task deleted successfully.')
-    } catch {
-      setError('Could not delete task.')
-    } finally {
-      setSaving(false)
-    }
+    setDetailsId(null)
+    setDeleteTarget(null)
   }
 
   return (
@@ -689,7 +592,7 @@ function App() {
             }
           }}
           onConfirm={() => {
-            void deleteTask()
+            void confirmDeleteTask()
           }}
         />
       )}
