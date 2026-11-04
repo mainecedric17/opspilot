@@ -1,14 +1,12 @@
-﻿
+
 import { useEffect, useState } from 'react'
 import {
   Activity,
   AlertCircle,
-  ArrowUpRight,
   Bot,
   CheckCircle2,
   ChevronDown,
   CircleHelp,
-  Clock3,
   LayoutDashboard,
   ListTodo,
   Loader2,
@@ -26,6 +24,7 @@ import {
 
 import ActivityLogs from './ActivityLogs'
 import TaskTable from './components/TaskTable'
+import OverviewDashboard from './components/OverviewDashboard'
 import DeleteTaskModal from './components/DeleteTaskModal'
 import TaskDetailsModal from './components/TaskDetailsModal'
 import './App.css'
@@ -107,14 +106,6 @@ function App() {
       cancelled = true
     }
   }, [])
-
-  const pending = tasks.filter(
-    task => task.status === 'Pending'
-  ).length
-
-  const completed = tasks.filter(
-    task => task.status === 'Completed'
-  ).length
 
   const owners = Array.from(
     new Set(tasks.map(task => task.owner))
@@ -510,155 +501,16 @@ function App() {
               </div>
             </section>
           ) : page === 'Overview' ? (
-            <>
-              <div className="stats-grid">
-                {[
-                  {
-                    label: 'Total Tasks',
-                    value: tasks.length,
-                    icon: ListTodo,
-                    detail: 'Across your workspace'
-                  },
-                  {
-                    label: 'Pending Tasks',
-                    value: pending,
-                    icon: Clock3,
-                    detail: 'Waiting to be started'
-                  },
-                  {
-                    label: 'Completed Tasks',
-                    value: completed,
-                    icon: CheckCircle2,
-                    detail: 'Successfully finished'
-                  },
-                  {
-                    label: 'Active Workflows',
-                    value: '0',
-                    icon: Workflow,
-                    detail: 'Not connected yet'
-                  }
-                ].map(stat => {
-                  const Icon = stat.icon
-
-                  return (
-                    <div
-                      className="stat-card"
-                      key={stat.label}
-                    >
-                      <div className="stat-top">
-                        <span>{stat.label}</span>
-                        <Icon size={19} />
-                      </div>
-
-                      <div className="stat-value">
-                        {stat.value}
-                      </div>
-
-                      <div className="stat-detail">
-                        {stat.detail}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-
-              <div className="dashboard-grid">
-                <section className="panel">
-                  <div className="panel-heading">
-                    <div>
-                      <h2>Recent tasks</h2>
-                      <p>
-                        Keep track of your team's priorities.
-                      </p>
-                    </div>
-
-                    <button
-                      className="text-button"
-                      onClick={() => setPage('Tasks')}
-                    >
-                      View all
-                      <ArrowUpRight size={16} />
-                    </button>
-                  </div>
-
-                  <TaskTable
-                    tasks={tasks.slice(0, 4)}
-                    saving={saving}
-                    onView={task =>
-                      setDetailsId(task.id)
-                    }
-                    onEdit={openEdit}
-                    onDelete={setDeleteTarget}
-                    onStatusChange={changeStatus}
-                  />
-                </section>
-
-                <section className="panel assistant-panel">
-                  <div className="assistant-icon">
-                    <Bot size={24} />
-                  </div>
-
-                  <div className="assistant-tag">
-                    <span className="status-dot" />
-                    COMING SOON
-                  </div>
-
-                  <h2>Meet your AI copilot</h2>
-
-                  <p>
-                    Analyze requests, organize tasks,
-                    and prepare follow-ups using
-                    natural language.
-                  </p>
-
-                  <div className="assistant-example">
-                    "Prioritize today's customer requests..."
-                  </div>
-
-                  <button
-                    className="secondary-button"
-                    onClick={() =>
-                      setPage('AI Assistant')
-                    }
-                  >
-                    Explore AI Assistant
-                    <ArrowUpRight size={16} />
-                  </button>
-                </section>
-              </div>
-
-              <section className="panel bottom-panel">
-                <div className="panel-heading">
-                  <div>
-                    <h2>Automation overview</h2>
-                    <p>
-                      Monitor your connected workflows
-                      and integrations.
-                    </p>
-                  </div>
-
-                  <span className="neutral-tag">
-                    Not configured
-                  </span>
-                </div>
-
-                <div className="empty-state">
-                  <div className="empty-icon">
-                    <Workflow size={23} />
-                  </div>
-
-                  <strong>
-                    No workflows connected yet
-                  </strong>
-
-                  <p>
-                    Your automation activity will appear
-                    here after we connect the backend
-                    and n8n.
-                  </p>
-                </div>
-              </section>
-            </>
+            <OverviewDashboard
+              tasks={tasks}
+              saving={saving}
+              onViewTask={task => setDetailsId(task.id)}
+              onEditTask={openEdit}
+              onDeleteTask={setDeleteTarget}
+              onStatusChange={changeStatus}
+              onViewAllTasks={() => setPage('Tasks')}
+              onOpenAssistant={() => setPage('AI Assistant')}
+            />
           ) : page === 'Tasks' ? (
             <section className="panel">
               <div className="panel-heading">
