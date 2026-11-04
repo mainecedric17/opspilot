@@ -1,5 +1,4 @@
 
-from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
@@ -18,17 +17,37 @@ app = FastAPI(
     version="1.1.0"
 )
 
+# CORS configuration for local React/Vite frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+    ],
     allow_credentials=False,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_methods=[
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "OPTIONS",
+    ],
+    allow_headers=[
+        "Content-Type",
+        "Authorization",
+    ],
 )
 
 
 Priority = Literal["Low", "Medium", "High"]
-TaskStatus = Literal["Pending", "In Progress", "Completed"]
+TaskStatus = Literal[
+    "Pending",
+    "In Progress",
+    "Completed"
+]
 
 
 class TaskCreate(BaseModel):
