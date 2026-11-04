@@ -19,3 +19,5 @@ dist/
 .vscode/
 .DS_Store
 Thumbs.db
+# Local refactoring backups
+*.before-*
