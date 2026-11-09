@@ -1,0 +1,173 @@
+
+.recent-list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.recent-task {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  padding: 19px 22px;
+  border-top: 1px solid #2c3042;
+}
+
+.recent-task-main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.recent-task-title {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #f0eff9;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: left;
+  overflow-wrap: break-word;
+  cursor: pointer;
+}
+
+.recent-task-title:hover {
+  color: #bca8ff;
+}
+
+.recent-task-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.recent-task-owner {
+  font-size: 12px;
+  color: #a5acc3;
+}
+
+.recent-task-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.recent-task-controls .op-status-select {
+  min-width: 120px;
+  max-width: 140px;
+  font-size: 12px;
+}
+
+.recent-task-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.recent-task-actions .op-icon-button {
+  width: 30px;
+  height: 30px;
+  padding: 5px;
+}
+
+.recent-empty {
+  padding: 45px 20px;
+  color: #a5acc3;
+  text-align: center;
+  font-size: 14px;
+}
+
+@media (max-width: 1100px) {
+  .recent-task {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .recent-task-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 480px) {
+  .recent-task {
+    padding: 16px;
+  }
+
+  .recent-task-controls {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .recent-task-controls .op-status-select {
+    min-width: 110px;
+  }
+}
+
+/* OPSPILOT — COLLAPSIBLE RECENT TASKS */
+
+.recent-tasks-container {
+  min-width: 0;
+}
+
+.recent-tasks-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 24px;
+  border-bottom: 1px solid #293141;
+  color: #95a3ba;
+  font-size: 11px;
+}
+
+.recent-toggle-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid #3d355d;
+  border-radius: 8px;
+  background: #26213c;
+  color: #c3b6ff;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .18s ease;
+}
+
+.recent-toggle-button:hover {
+  background: #373052;
+}
+
+.recent-toggle-button:focus-visible {
+  outline: 2px solid #967df7;
+  outline-offset: 2px;
+}
+
+.recent-list-expanded {
+  max-height: 520px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #4c426b transparent;
+}
+
+@media (max-width: 600px) {
+  .recent-tasks-summary {
+    padding: 12px 16px;
+  }
+}

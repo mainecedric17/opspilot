@@ -1,9 +1,11 @@
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   Activity,
   AlertCircle,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Clock3,
   Loader2,
   Pencil,
@@ -13,6 +15,7 @@ import {
   Trash2,
   X
 } from 'lucide-react'
+import { apiRequest } from './services/api'
 
 type ActivityLog = {
   id: string
@@ -22,8 +25,6 @@ type ActivityLog = {
   actor: string
   created_at: string
 }
-
-const API_URL = 'http://127.0.0.1:8000'
 
 const actionLabels: Record<string, string> = {
   TASK_CREATED: 'Task created',
@@ -79,8 +80,9 @@ export default function ActivityLogs() {
   const [error, setError] = useState('')
   const [filter, setFilter] = useState('All')
   const [search, setSearch] = useState('')
+  const [logsCollapsed, setLogsCollapsed] = useState(false)
 
-  async function loadLogs(showRefreshing = false) {
+  const loadLogs = useCallback(async (showRefreshing = false) => {
     if (showRefreshing) {
       setRefreshing(true)
     } else {
@@ -90,29 +92,30 @@ export default function ActivityLogs() {
     setError('')
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/activity-logs?limit=100`
+      const data = await apiRequest<ActivityLog[]>(
+        '/api/activity-logs?limit=100'
       )
 
-      if (!response.ok) {
-        throw new Error('Failed to load activity logs')
+      if (!Array.isArray(data)) {
+        throw new Error('Unexpected activity logs response.')
       }
 
-      const data: ActivityLog[] = await response.json()
       setLogs(data)
-    } catch {
+    } catch (err) {
       setError(
-        'Unable to load activity history. Check your backend connection.'
+        err instanceof Error
+          ? `Unable to load activity history: ${err.message}`
+          : 'Unable to load activity history.'
       )
     } finally {
       setLoading(false)
       setRefreshing(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     void loadLogs()
-  }, [])
+  }, [loadLogs])
 
   const filteredLogs = logs.filter(log => {
     const matchesAction =
@@ -163,18 +166,45 @@ export default function ActivityLogs() {
           </p>
         </div>
 
-        <button
-          type="button"
-          className="secondary-button"
-          disabled={refreshing || loading}
-          onClick={() => void loadLogs(true)}
-        >
-          <RefreshCw
-            size={15}
-            className={refreshing ? 'op-spin' : ''}
-          />
-          Refresh
-        </button>
+        <div className="wf-panel-header-actions">
+          <button
+            type="button"
+            className="secondary-button"
+            disabled={refreshing || loading}
+            onClick={() => void loadLogs(true)}
+          >
+            <RefreshCw
+              size={15}
+              className={refreshing ? 'op-spin' : ''}
+            />
+            Refresh
+          </button>
+
+          <button
+            type="button"
+            className="wf-collapse-button"
+            onClick={() => setLogsCollapsed(previous => !previous)}
+            aria-expanded={!logsCollapsed}
+            aria-controls="op-activity-collapse-content"
+            aria-label={
+              logsCollapsed
+                ? 'Expand activity logs'
+                : 'Minimize activity logs'
+            }
+            title={
+              logsCollapsed
+                ? 'Expand activity logs'
+                : 'Minimize activity logs'
+            }
+          >
+            {logsCollapsed ? (
+              <ChevronDown size={16} />
+            ) : (
+              <ChevronUp size={16} />
+            )}
+            <span>{logsCollapsed ? 'Expand' : 'Minimize'}</span>
+          </button>
+        </div>
       </div>
 
       <div className="op-activity-summary">
@@ -250,107 +280,122 @@ export default function ActivityLogs() {
         </div>
       )}
 
-      {loading ? (
-        <div className="empty-state">
-          <Loader2 className="op-spin" size={27} />
-          <strong>Loading activity history...</strong>
-        </div>
-      ) : filteredLogs.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">
-            <Activity size={24} />
-          </div>
-
-          <strong>No activities found</strong>
-
-          <p>
-            {logs.length === 0
-              ? 'Task changes will appear here automatically.'
-              : 'Try adjusting your search or activity filter.'}
-          </p>
-
-          {hasFilters && (
-            <button
-              type="button"
-              className="op-clear-filters"
-              onClick={clearFilters}
-            >
-              Clear filters
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="op-activity-list">
-          {filteredLogs.map(log => (
-            <article
-              className="op-activity-item"
-              key={log.id}
-            >
-              <div
-                className={`op-activity-icon ${log.action.toLowerCase().replaceAll('_', '-')}`}
-              >
-                {getActionIcon(log.action)}
+      <div
+        id="op-activity-collapse-content"
+        className={`wf-collapse-content ${
+          logsCollapsed ? 'is-collapsed' : ''
+        }`}
+        aria-hidden={logsCollapsed}
+        inert={logsCollapsed}
+      >
+        <div className="wf-collapse-inner">
+          {loading ? (
+            <div className="empty-state">
+              <Loader2 className="op-spin" size={27} />
+              <strong>Loading activity history...</strong>
+            </div>
+          ) : filteredLogs.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-icon">
+                <Activity size={24} />
               </div>
 
-              <div className="op-activity-content">
-                <div className="op-activity-item-heading">
-                  <span className="op-activity-title">
-                    {actionLabels[log.action] ?? log.action}
-                  </span>
+              <strong>No activities found</strong>
 
-                  <time
-                    className="op-activity-time"
-                    dateTime={log.created_at}
+              <p>
+                {logs.length === 0
+                  ? error
+                    ? 'Activity history could not be loaded.'
+                    : 'Task changes will appear here automatically.'
+                  : 'Try adjusting your search or activity filter.'}
+              </p>
+
+              {hasFilters && (
+                <button
+                  type="button"
+                  className="op-clear-filters"
+                  onClick={clearFilters}
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="op-activity-list">
+              {filteredLogs.map(log => (
+                <article
+                  className="op-activity-item"
+                  key={log.id}
+                >
+                  <div
+                    className={`op-activity-icon ${log.action
+                      .toLowerCase()
+                      .replaceAll('_', '-')}`}
                   >
-                    {formatTime(log.created_at)}
-                  </time>
-                </div>
+                    {getActionIcon(log.action)}
+                  </div>
 
-                <p>{log.description}</p>
+                  <div className="op-activity-content">
+                    <div className="op-activity-item-heading">
+                      <span className="op-activity-title">
+                        {actionLabels[log.action] ?? log.action}
+                      </span>
 
-                <div className="op-activity-meta">
-                  <span>{log.actor}</span>
+                      <time
+                        className="op-activity-time"
+                        dateTime={log.created_at}
+                      >
+                        {formatTime(log.created_at)}
+                      </time>
+                    </div>
 
-                  <span className="op-activity-separator">
-                    ·
-                  </span>
+                    <p>{log.description}</p>
 
-                  <Clock3 size={13} />
+                    <div className="op-activity-meta">
+                      <span>{log.actor}</span>
 
-                  <span>
-                    {formatDate(log.created_at)}
-                  </span>
-
-                  {log.task_id && (
-                    <>
                       <span className="op-activity-separator">
                         ·
                       </span>
 
-                      <span
-                        className="op-activity-task-ref"
-                        title={log.task_id}
-                      >
-                        Task #{log.task_id.slice(0, 8)}
+                      <Clock3 size={13} />
+
+                      <span>
+                        {formatDate(log.created_at)}
                       </span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
 
-      {!loading && (
-        <div className="op-activity-footer">
-          <span>
-            Showing {filteredLogs.length} of {logs.length} recent events
-          </span>
+                      {log.task_id && (
+                        <>
+                          <span className="op-activity-separator">
+                            ·
+                          </span>
 
-          <span>Times shown in Philippine Time (PHT)</span>
+                          <span
+                            className="op-activity-task-ref"
+                            title={log.task_id}
+                          >
+                            Task #{log.task_id.slice(0, 8)}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+
+          {!loading && (
+            <div className="op-activity-footer">
+              <span>
+                Showing {filteredLogs.length} of {logs.length} recent events
+              </span>
+
+              <span>Times shown in Philippine Time (PHT)</span>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </section>
   )
 }

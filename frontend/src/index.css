@@ -1,23 +1,239 @@
 
+/* ==========================================
+   OPSPILOT — GLOBAL DESIGN SYSTEM
+   ========================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ------------------------------------------
+   1. DESIGN TOKENS
+   ------------------------------------------ */
+
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  color-scheme: dark;
+  color: #f1f4fa;
+  background: #0b0f19;
+
+  /* Typography */
+  --font-xs: 11px;
+  --font-sm: 12px;
+  --font-base: 14px;
+  --font-md: 16px;
+  --font-lg: 18px;
+  --font-xl: 22px;
+  --font-2xl: 28px;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Core surfaces */
+  --op-bg: #0b0f19;
+  --op-sidebar: #0e1320;
+  --op-surface: #111827;
+  --op-surface-raised: #171f30;
+  --op-surface-hover: #1c2639;
+
+  /* Borders */
+  --op-border: #2a3242;
+  --op-border-subtle: rgba(148, 163, 184, 0.12);
+  --op-accent-border: rgba(139, 108, 246, 0.35);
+
+  /* Text */
+  --op-text: #f1f4fa;
+  --op-muted: #9ca7ba;
+  --op-subtle: #697589;
+
+  /* Accent */
+  --op-accent: #8b6cf6;
+  --op-accent-hover: #9b82ff;
+  --op-accent-soft: rgba(139, 108, 246, 0.12);
+
+  /* Status colors */
+  --op-success: #34d399;
+  --op-success-soft: rgba(52, 211, 153, 0.12);
+
+  --op-warning: #fbbf24;
+  --op-warning-soft: rgba(251, 191, 36, 0.12);
+
+  --op-danger: #f87171;
+  --op-danger-soft: rgba(248, 113, 113, 0.12);
+
+  --op-info: #60a5fa;
+  --op-info-soft: rgba(96, 165, 250, 0.12);
+
+  /* Compatibility aliases */
+  --color-text: var(--op-text);
+  --color-muted: var(--op-muted);
+  --color-border: var(--op-border);
+  --color-accent: var(--op-accent);
+
+  /* Radius */
+  --op-radius-sm: 6px;
+  --op-radius-md: 10px;
+  --op-radius-lg: 14px;
+  --op-radius-xl: 18px;
+
+  /* Shadows */
+  --op-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.16);
+  --op-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.22);
+  --op-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.3);
+
+  /* Transitions */
+  --op-transition: 160ms ease;
+  --op-transition-slow: 240ms ease;
+}
+
+/* ------------------------------------------
+   2. GLOBAL RESET
+   ------------------------------------------ */
+
+* {
+  box-sizing: border-box;
 }
 
 html {
   min-width: 320px;
-  background: #0b0f19;
+  min-height: 100%;
+  background: var(--op-bg);
+  scroll-behavior: auto;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+
+  font-family: inherit;
+  font-size: var(--font-base);
+  font-weight: var(--weight-regular);
+  line-height: 1.6;
+
+  color: var(--op-text);
+  background: var(--op-bg);
 }
 
 #root {
   min-height: 100vh;
+}
+
+/* ------------------------------------------
+   3. TYPOGRAPHY
+   ------------------------------------------ */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-top: 0;
+  color: var(--op-text);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.025em;
+  line-height: 1.3;
+}
+
+p {
+  line-height: 1.65;
+}
+
+small {
+  font-size: var(--font-xs);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ------------------------------------------
+   4. FORM ELEMENTS
+   ------------------------------------------ */
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+input,
+textarea,
+select {
+  color: var(--op-text);
+}
+
+button:disabled,
+input:disabled,
+textarea:disabled,
+select:disabled {
+  cursor: not-allowed;
+}
+
+/* ------------------------------------------
+   5. ACCESSIBILITY
+   ------------------------------------------ */
+
+:focus-visible {
+  outline: 2px solid var(--op-accent);
+  outline-offset: 3px;
+}
+
+::selection {
+  color: #ffffff;
+  background: rgba(139, 108, 246, 0.35);
+}
+
+/* ------------------------------------------
+   6. SCROLLBARS
+   ------------------------------------------ */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #343d50 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #343d50;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #4b5870;
+}
+
+/* ------------------------------------------
+   7. REDUCED MOTION
+   ------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
